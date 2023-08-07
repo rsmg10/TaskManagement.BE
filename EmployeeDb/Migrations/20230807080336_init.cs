@@ -1,11 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace MITT.EmployeeDb.Migrations
 {
+    /// <inheritdoc />
     public partial class init : Migration
     {
+        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.EnsureSchema(
@@ -21,15 +24,16 @@ namespace MITT.EmployeeDb.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Type = table.Column<int>(type: "int", nullable: false),
+                    Image = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ActiveState = table.Column<int>(type: "int", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     FullName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     NickName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Phone = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Pin = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Image = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ActiveState = table.Column<int>(type: "int", nullable: false)
+                    IsSigned = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -37,45 +41,24 @@ namespace MITT.EmployeeDb.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "DevTasks",
+                name: "Managers",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    SeqNo = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Requirements = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ImplementationType = table.Column<int>(type: "int", nullable: false),
-                    TaskState = table.Column<int>(type: "int", nullable: false),
-                    CompletionMessage = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Image = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ActiveState = table.Column<int>(type: "int", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_DevTasks", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ProjectManagers",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     FullName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     NickName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Phone = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Pin = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Image = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ActiveState = table.Column<int>(type: "int", nullable: false)
+                    IsSigned = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ProjectManagers", x => x.Id);
+                    table.PrimaryKey("PK_Managers", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -87,7 +70,7 @@ namespace MITT.EmployeeDb.Migrations
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ProjectType = table.Column<int>(type: "int", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -100,15 +83,17 @@ namespace MITT.EmployeeDb.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ProjectManagerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ProjectId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    ProjectId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AssignedManagers", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_AssignedManagers_ProjectManagers_ProjectManagerId",
+                        name: "FK_AssignedManagers_Managers_ProjectManagerId",
                         column: x => x.ProjectManagerId,
-                        principalTable: "ProjectManagers",
+                        principalTable: "Managers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
@@ -120,58 +105,103 @@ namespace MITT.EmployeeDb.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "AssignedTasks",
+                name: "Tasks",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    SeqNo = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Requirements = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ImplementationType = table.Column<int>(type: "int", nullable: false),
+                    TaskState = table.Column<int>(type: "int", nullable: false),
+                    CompletionMessage = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CommitTag = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    MainBranch = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    MergeBranch = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AssignedManagerId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Tasks", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Tasks_AssignedManagers_AssignedManagerId",
+                        column: x => x.AssignedManagerId,
+                        principalTable: "AssignedManagers",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AssignedBETasks",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     TaskState = table.Column<int>(type: "int", nullable: false),
                     DevTaskId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     DeveloperId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    AssignedManagerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    BeReviews = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_AssignedTasks", x => x.Id);
+                    table.PrimaryKey("PK_AssignedBETasks", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_AssignedTasks_AssignedManagers_AssignedManagerId",
-                        column: x => x.AssignedManagerId,
-                        principalTable: "AssignedManagers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_AssignedTasks_Developers_DeveloperId",
+                        name: "FK_AssignedBETasks_Developers_DeveloperId",
                         column: x => x.DeveloperId,
                         principalTable: "Developers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_AssignedTasks_DevTasks_DevTaskId",
+                        name: "FK_AssignedBETasks_Tasks_DevTaskId",
                         column: x => x.DevTaskId,
-                        principalTable: "DevTasks",
+                        principalTable: "Tasks",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Reviews",
+                name: "AssignedQATasks",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    AssignedTaskId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Findings = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    TaskState = table.Column<int>(type: "int", nullable: false),
+                    DevTaskId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    DeveloperId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    QaReviews = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Reviews", x => x.Id);
+                    table.PrimaryKey("PK_AssignedQATasks", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Reviews_AssignedTasks_AssignedTaskId",
-                        column: x => x.AssignedTaskId,
-                        principalTable: "AssignedTasks",
+                        name: "FK_AssignedQATasks_Developers_DeveloperId",
+                        column: x => x.DeveloperId,
+                        principalTable: "Developers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AssignedQATasks_Tasks_DevTaskId",
+                        column: x => x.DevTaskId,
+                        principalTable: "Tasks",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AssignedBETasks_DeveloperId",
+                table: "AssignedBETasks",
+                column: "DeveloperId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AssignedBETasks_DevTaskId",
+                table: "AssignedBETasks",
+                column: "DevTaskId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AssignedManagers_ProjectId",
@@ -184,45 +214,41 @@ namespace MITT.EmployeeDb.Migrations
                 column: "ProjectManagerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_AssignedTasks_AssignedManagerId",
-                table: "AssignedTasks",
-                column: "AssignedManagerId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AssignedTasks_DeveloperId",
-                table: "AssignedTasks",
+                name: "IX_AssignedQATasks_DeveloperId",
+                table: "AssignedQATasks",
                 column: "DeveloperId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_AssignedTasks_DevTaskId",
-                table: "AssignedTasks",
+                name: "IX_AssignedQATasks_DevTaskId",
+                table: "AssignedQATasks",
                 column: "DevTaskId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Reviews_AssignedTaskId",
-                table: "Reviews",
-                column: "AssignedTaskId");
+                name: "IX_Tasks_AssignedManagerId",
+                table: "Tasks",
+                column: "AssignedManagerId");
         }
 
+        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Reviews");
+                name: "AssignedBETasks");
 
             migrationBuilder.DropTable(
-                name: "AssignedTasks");
-
-            migrationBuilder.DropTable(
-                name: "AssignedManagers");
+                name: "AssignedQATasks");
 
             migrationBuilder.DropTable(
                 name: "Developers");
 
             migrationBuilder.DropTable(
-                name: "DevTasks");
+                name: "Tasks");
 
             migrationBuilder.DropTable(
-                name: "ProjectManagers");
+                name: "AssignedManagers");
+
+            migrationBuilder.DropTable(
+                name: "Managers");
 
             migrationBuilder.DropTable(
                 name: "Projects");

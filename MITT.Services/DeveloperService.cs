@@ -4,6 +4,7 @@ using MITT.EmployeeDb;
 using MITT.EmployeeDb.Models;
 using MITT.Services.Abstracts;
 using MITT.Services.Helpers;
+using System.Linq.Expressions;
 
 namespace MITT.Services;
 
@@ -17,16 +18,21 @@ public class DeveloperService : ManagementService<Developer>, IDeveloperService
     {
         var content = new List<DeveloperVm>();
 
+        Expression<Func<Developer, bool>> predicate = x => activeOnly ?
+            x.ActiveState == ActiveState.Active :
+            x.ActiveState == ActiveState.Inactive && x.ActiveState == ActiveState.Active;
+
         var developers = await _managementDb.Developers
             .OrderBy(x => x.Type == DeveloperType.Rv)
             .ThenBy(x => x.Type == DeveloperType.Be)
+            .Where(predicate)
             .ToListAsync(cancellationToken);
 
         foreach (var developer in developers) content.Add(new DeveloperVm
         {
             Id = developer.Id.ToString(),
-            FullName = developer.FullName(),
-            NickName = developer.First,
+            FullName = developer.FullName,
+            NickName = developer.NickName,
             Email = developer.Email,
             Phone = developer.Phone,
             Pin = developer.Pin,
@@ -54,8 +60,8 @@ public class DeveloperService : ManagementService<Developer>, IDeveloperService
         foreach (var developer in developers) content.Add(new DeveloperVm
         {
             Id = developer.Id.ToString(),
-            FullName = developer.FullName(),
-            NickName = developer.First,
+            FullName = developer.FullName,
+            NickName = developer.NickName,
             Email = developer.Email,
             Phone = developer.Phone,
             Pin = developer.Pin,
@@ -72,7 +78,7 @@ public class DeveloperService : ManagementService<Developer>, IDeveloperService
         if (string.IsNullOrEmpty(developerDto.Id))
         {
             var dev = await _managementDb.Developers.FirstOrDefaultAsync(x => x.Email == developerDto.Email, cancellationToken);
-            if (dev is not null && dev.Email.Equals(developerDto.Email)) return OperationResult.UnValid("this Email is already taken");
+            if (dev is not null) return OperationResult.UnValid("this Email is already been taken");
 
             var entity = Developer.Create(developerDto.FullName, developerDto.NickName, developerDto.Email, developerDto.Phone, developerDto.Pin, developerDto.Type);
 
@@ -86,7 +92,7 @@ public class DeveloperService : ManagementService<Developer>, IDeveloperService
         if (!developer.Email.Equals(developerDto.Email))
         {
             var dev = await _managementDb.Developers.FirstOrDefaultAsync(x => x.Email == developerDto.Email, cancellationToken);
-            if (dev is not null) return OperationResult.UnValid("this Email is already taken");
+            if (dev is not null) return OperationResult.UnValid("this Email is already been taken");
         }
 
         if (developer is null) throw new Exception($"invalid_{developer}_id!!");
@@ -116,7 +122,7 @@ public class DeveloperService : ManagementService<Developer>, IDeveloperService
                     Name = beTask.DevTask.Name,
                     Description = beTask.DevTask.Description,
                     AssignedManagerId = beTask.DevTask.AssignedManagerId.ToString(),
-                    AssignedManagerName = beTask.DevTask.AssignedManager.ProjectManager.FullName(),
+                    AssignedManagerName = beTask.DevTask.AssignedManager.ProjectManager.NickName,
                     StartDate = beTask.DevTask.StartDate,
                     EndDate = beTask.DevTask.EndDate,
                     Requirements = beTask.DevTask.Requirements,
@@ -139,7 +145,7 @@ public class DeveloperService : ManagementService<Developer>, IDeveloperService
                     Name = x.DevTask.Name,
                     Description = x.DevTask.Description,
                     AssignedManagerId = x.DevTask.AssignedManagerId.ToString(),
-                    AssignedManagerName = x.DevTask.AssignedManager.ProjectManager.First,
+                    AssignedManagerName = x.DevTask.AssignedManager.ProjectManager.NickName,
                     StartDate = x.DevTask.StartDate,
                     EndDate = x.DevTask.EndDate,
                     Requirements = x.DevTask.Requirements,
@@ -155,10 +161,7 @@ public class DeveloperService : ManagementService<Developer>, IDeveloperService
 
     public async Task<OperationResult> ChangeState(string developerId, CancellationToken cancellationToken = default)
     {
-        var developer = await _managementDb.Developers.FirstOrDefaultAsync(x => x.Id == Guid.Parse(developerId), cancellationToken);
-
-        if (developer == null) throw new Exception();
-
+        var developer = await _managementDb.Developers.FirstOrDefaultAsync(x => x.Id == Guid.Parse(developerId), cancellationToken) ?? throw new Exception();
         if (developer.ActiveState == ActiveState.Active) developer.ActiveState = ActiveState.Inactive;
         else developer.ActiveState = ActiveState.Active;
 

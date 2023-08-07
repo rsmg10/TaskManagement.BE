@@ -1,4 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿// Ignore Spelling: Dto
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using MITT.EmployeeDb;
 using MITT.EmployeeDb.Models;
 using MITT.Services.Abstracts;
@@ -23,22 +26,25 @@ public class TaskService : ManagementService<DevTask>, ITaskService
             Id = task.Id.ToString(),
             SeqNo = task.SeqNo,
             AssignedManagerId = task.AssignedManagerId.ToString(),
-            AssignedManagerName = task.AssignedManager.ProjectManager.FullName(),
+            AssignedManagerName = task.AssignedManager.ProjectManager.FullName,
             CompletionMessage = task.CompletionMessage ?? string.Empty,
-            Description = task.Description,
-            ImplementationType = task.ImplementationType,
-            EndDate = task.EndDate,
-            StartDate = task.StartDate,
             Name = task.Name,
+            Description = task.Description,
+            MainBranch = task.MainBranch,
+            MergeBranch = task.MergeBranch,
+            CommitTag = task.CommitTag,
+            ImplementationType = task.ImplementationType,
+            StartDate = task.StartDate,
+            EndDate = task.EndDate,
             Requirements = task.Requirements,
             TaskState = task.TaskState,
             AssignedProjectId = task.AssignedManager.ProjectId.ToString(),
             AssignedProjectName = task.AssignedManager.Project.Name,
+            AssignedBeDevs = await GetAssignedBeDevs(task.Id),
+            AssignedQaDevs = await GetAssignedQaDevs(task),
             TimeLeft = string.Empty,
             Progress = string.Empty,
-            TimeAllow = 0,
-            AssignedBeDevs = await GetAssignedBeDevs(task),
-            AssignedQaDevs = await GetAssignedQaDevs(task)
+            TimeAllow = 0
         });
 
         return list.OrderBy(x => x.SeqNo)
@@ -55,63 +61,50 @@ public class TaskService : ManagementService<DevTask>, ITaskService
             Id = x.Id.ToString(),
             SeqNo = x.SeqNo,
             Name = x.Name,
+            MainBranch = x.MainBranch,
+            MergeBranch = x.MergeBranch,
             StartDate = x.StartDate,
             EndDate = x.EndDate,
             ProjectType = x.AssignedManager.Project.ProjectType,
             ImplementationType = x.ImplementationType
         }).ToListAsync(cancellationToken);
 
-    public async Task<OperationResult> AddOrUpdateTask(TaskDto taskDto, CancellationToken cancellationToken = default)
+    public async Task<OperationResult> AddTask(TaskDto taskDto, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(taskDto.Id))
-        {
-            var manager = await _managementDb.AssignedManagers
-                .Include(x => x.Project)
-                .FirstOrDefaultAsync(x => x.Id == Guid.Parse(taskDto.AssignedManagerId), cancellationToken);
+        var manager = await _managementDb.AssignedManagers
+            .Include(x => x.Project)
+            .FirstOrDefaultAsync(x => x.Id == Guid.Parse(taskDto.AssignedManagerId), cancellationToken) ?? throw new Exception($"invalid_manager_id!!");
 
-            var seqNo = await _managementDb.GenerateSequance(manager.Project.ProjectType);
+        var seqNo = await _managementDb.GenerateSequance(manager.Project.ProjectType);
 
-            var entity = DevTask.Create(seqNo,
-                                        taskDto.Name,
-                                        taskDto.Description,
-                                        taskDto.StartDate,
-                                        taskDto.EndDate,
-                                        taskDto.ImplementationType,
-                                        taskDto.Requirements,
-                                        Guid.Parse(taskDto.AssignedManagerId));
+        var entity = DevTask.Create(seqNo,
+                                    taskDto.Name,
+                                    taskDto.Description,
+                                    taskDto.MainBranch,
+                                    taskDto.MergeBranch,
+                                    taskDto.StartDate ?? DateTime.Now,
+                                    taskDto.EndDate,
+                                    taskDto.ImplementationType,
+                                    taskDto.Requirements,
+                                    manager.Id);
 
-            await Add(entity, cancellationToken);
-
-            return OperationResult.Valid();
-        }
-
-        var task = await Get(Guid.Parse(taskDto.Id), cancellationToken);
-
-        if (task is null) throw new Exception($"invalid_{nameof(task)}_id!!");
-
-        task.Update(taskDto.Name, taskDto.Description, taskDto.StartDate, taskDto.EndDate, taskDto.ImplementationType, taskDto.Requirements);
-
-        await Update(task, cancellationToken);
+        await Add(entity, cancellationToken);
 
         return OperationResult.Valid();
     }
 
-    public async Task<OperationResult> CompleteTaskByReviewer(string reviewerId, string taskId, string message, CancellationToken cancellationToken = default)
+    public async Task<OperationResult> CompleteTaskByReviewer(CompleteTaskDto completeTaskDto, CancellationToken cancellationToken = default)
     {
-        var reviewer = await _managementDb.Developers.FirstOrDefaultAsync(x => x.Id == Guid.Parse(reviewerId) && x.Type == DeveloperType.Rv, cancellationToken);
+        var reviewer = await _managementDb.Developers.FirstOrDefaultAsync(x => x.Id == Guid.Parse(completeTaskDto.ReviewerId) && x.Type == DeveloperType.Rv, cancellationToken) ?? throw new Exception("invalid_reviewer_id!!");
+        var task = await _managementDb.Tasks.FirstOrDefaultAsync(x => x.Id == Guid.Parse(completeTaskDto.TaskId) && x.TaskState == TaskState.Pending, cancellationToken) ?? throw new Exception("invalid_task_id!!");
 
-        if (reviewer is null) throw new Exception();
-
-        var task = await _managementDb.Tasks.FirstOrDefaultAsync(x => x.Id == Guid.Parse(taskId) && x.TaskState == TaskState.Pending, cancellationToken);
-
-        if (task is null) throw new Exception();
-
-        if (!string.IsNullOrEmpty(message))
+        if (string.IsNullOrEmpty(completeTaskDto.Message)) task.TaskState = TaskState.Completed;
+        else
         {
             task.TaskState = TaskState.Canceled;
-            task.CompletionMessage = message;
+            task.CompletionMessage = completeTaskDto.Message;
+            task.CommitTag = completeTaskDto.CommitTag;
         }
-        else task.TaskState = TaskState.Completed;
 
         await Update(task, cancellationToken);
 
@@ -163,21 +156,20 @@ public class TaskService : ManagementService<DevTask>, ITaskService
             .ToListAsync(cancellationToken);
     }
 
-    private async Task<List<AssignedDevVm>> GetAssignedBeDevs(DevTask devTask)
+    private async Task<List<AssignedDevVm>> GetAssignedBeDevs(Guid devTaskId)
     {
         var list = new List<AssignedDevVm>();
 
         var tasks = await _managementDb.AssignedBetasks
-            .Where(x => x.DevTaskId == devTask.Id)
+            .Where(x => x.DevTaskId == devTaskId)
             .Include(x => x.Developer)
-            .Include(x => x.BeReviews)
             .ToListAsync();
 
         foreach (var task in tasks) list.Add(new AssignedDevVm
         {
             AssignedTaskId = task.Id.ToString(),
             DevId = task.DeveloperId.ToString(),
-            Name = task.Developer.FullName(),
+            Name = task.Developer.FullName,
             Email = task.Developer.Email,
             Phone = task.Developer.Phone,
             Reviews = task.BeReviews.Select(x => new ReviewVm
@@ -197,14 +189,13 @@ public class TaskService : ManagementService<DevTask>, ITaskService
         var tasks = await _managementDb.AssignedQatasks
             .Where(x => x.DevTaskId == devTask.Id)
             .Include(x => x.Developer)
-            .Include(x => x.QaReviews)
             .ToListAsync();
 
         foreach (var task in tasks) list.Add(new AssignedDevVm
         {
             AssignedTaskId = task.Id.ToString(),
             DevId = task.DeveloperId.ToString(),
-            Name = task.Developer.FullName(),
+            Name = task.Developer.FullName,
             Email = task.Developer.Email,
             Phone = task.Developer.Phone,
             Reviews = task.QaReviews.Select(x => new ReviewVm

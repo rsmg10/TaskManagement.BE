@@ -2,11 +2,15 @@
 {
     public partial class BeReview : BaseEntity
     {
-        public BeReview()
+        private BeReview(AssignedBeTask assigned, List<ReviewFinding> findings)
         {
             Id = Guid.NewGuid();
             CreatedAt = DateTime.Now;
+            AssignedBeTask = assigned;
+            Findings = findings;
         }
+
+        public static BeReview Create(AssignedBeTask assigned, List<ReviewFinding> findings) => new(assigned, findings);
 
         public Guid AssignedBeTaskId { get; set; }
         public List<ReviewFinding> Findings { get; set; }

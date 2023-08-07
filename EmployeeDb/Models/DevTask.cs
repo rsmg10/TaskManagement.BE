@@ -15,8 +15,11 @@
         public ImplementationType ImplementationType { get; private set; }
         public TaskState TaskState { get; set; }
         public string CompletionMessage { get; set; }
+        public string CommitTag { get; set; }
         public DateTime? StartDate { get; private set; }
         public DateTime? EndDate { get; private set; }
+        public string MainBranch { get; set; }
+        public string MergeBranch { get; set; }
         public Guid? AssignedManagerId { get; private set; }
 
         public virtual AssignedManager AssignedManager { get; set; }
@@ -26,10 +29,12 @@
         public static DevTask Create(string seqNo,
                                      string name,
                                      string description,
+                                     string mainBranch,
+                                     string mergeBranch,
                                      DateTime startDate,
                                      DateTime endDate,
-                                     ImplementationType implType,
-                                     List<string> req,
+                                     ImplementationType implementationType,
+                                     List<string> requirements,
                                      Guid assignedManagerId) => new()
                                      {
                                          Id = Guid.NewGuid(),
@@ -37,39 +42,19 @@
                                          SeqNo = seqNo,
                                          Name = name,
                                          Description = description,
+                                         MainBranch = mainBranch,
+                                         MergeBranch = mergeBranch,
                                          StartDate = startDate,
                                          EndDate = endDate,
-                                         ImplementationType = implType,
-                                         Requirements = req,
+                                         ImplementationType = implementationType,
+                                         Requirements = requirements,
                                          AssignedManagerId = assignedManagerId,
                                          TaskState = TaskState.Pending,
                                      };
 
-        public void AddQaDevelopers(IEnumerable<Developer> developers)
-        {
-            foreach (Developer developer in developers)
-            {
-                AssignedQatasks.Add(AssignedQaTask.Create(this, developer));
-            }
-        }
+        public void AddQaDevelopers(List<Developer> developers) => developers.ForEach(developer => AssignedQatasks.Add(AssignedQaTask.Create(this, developer)));
 
-        public void AddBeDevelopers(IEnumerable<Developer> developers)
-        {
-            foreach (Developer developer in developers)
-            {
-                AssignedBetasks.Add(AssignedBeTask.Create(this, developer));
-            }
-        }
-
-        public void Update(string name, string description, DateTime startDate, DateTime endDate, ImplementationType implType, List<string> req)
-        {
-            Name = name;
-            Description = description;
-            StartDate = startDate;
-            EndDate = endDate;
-            ImplementationType = implType;
-            Requirements = req;
-        }
+        public void AddBeDevelopers(List<Developer> developers) => developers.ForEach(developer => AssignedBetasks.Add(AssignedBeTask.Create(this, developer)));
     }
 
     public enum TaskState

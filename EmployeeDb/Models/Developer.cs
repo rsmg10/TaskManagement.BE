@@ -14,11 +14,11 @@
         public virtual ICollection<AssignedBeTask> AssignedBetasks { get; set; }
         public virtual ICollection<AssignedQaTask> AssignedQatasks { get; set; }
 
-        public static Developer Create(string firstName, string lastName, string email, string phone, string pin, DeveloperType developerType) => new()
+        public static Developer Create(string fullName, string nickName, string email, string phone, string pin, DeveloperType developerType) => new()
         {
             Id = Guid.NewGuid(),
-            First = firstName,
-            Last = lastName,
+            FullName = fullName,
+            NickName = nickName,
             Email = email,
             Phone = phone,
             Pin = pin,
@@ -26,10 +26,10 @@
             CreatedAt = DateTime.Now
         };
 
-        public void Update(string firstName, string lastName, string email, string phone, DeveloperType developerType)
+        public void Update(string fullName, string nickName, string email, string phone, DeveloperType developerType)
         {
-            First = firstName;
-            Last = lastName;
+            FullName = fullName;
+            NickName = nickName;
             Phone = email;
             Email = email;
             Type = developerType;

@@ -8,9 +8,17 @@ public interface ITaskService
 
     Task<List<TaskNamesVm>> TaskNames(CancellationToken cancellationToken = default);
 
-    Task<OperationResult> AddOrUpdateTask(TaskDto taskDto, CancellationToken cancellationToken = default);
+    Task<OperationResult> AddTask(TaskDto taskDto, CancellationToken cancellationToken = default);
 
-    Task<OperationResult> CompleteTaskByReviewer(string reviewerId, string taskId, string message, CancellationToken cancellationToken = default);
+    Task<OperationResult> CompleteTaskByReviewer(CompleteTaskDto completeTaskDto, CancellationToken cancellationToken = default);
+}
+
+public class CompleteTaskDto
+{
+    public string ReviewerId { get; set; }
+    public string TaskId { get; set; }
+    public string Message { get; set; }
+    public string CommitTag { get; set; }
 }
 
 public class AssignTaskDto
@@ -22,13 +30,14 @@ public class AssignTaskDto
 
 public class TaskDto
 {
-    public string Id { get; set; }
     public string Name { get; set; }
     public string Description { get; set; }
+    public string MainBranch { get; set; }
+    public string MergeBranch { get; set; }
     public List<string> Requirements { get; set; }
     public string AssignedManagerId { get; set; }
     public ImplementationType ImplementationType { get; set; }
-    public DateTime StartDate { get; set; }
+    public DateTime? StartDate { get; set; }
     public DateTime EndDate { get; set; }
 }
 
@@ -37,6 +46,8 @@ public class TaskNamesVm
     public string Id { get; set; }
     public string SeqNo { get; set; }
     public string Name { get; set; }
+    public string MainBranch { get; set; }
+    public string MergeBranch { get; set; }
     public DateTime? StartDate { get; set; } = null;
     public DateTime? EndDate { get; set; } = null;
     public ProjectType ProjectType { get; set; }
@@ -49,6 +60,9 @@ public class TaskVm
     public string SeqNo { get; set; }
     public string Name { get; set; }
     public string Description { get; set; }
+    public string MainBranch { get; set; }
+    public string MergeBranch { get; set; }
+    public string CommitTag { get; set; }
     public List<string> Requirements { get; set; }
     public string AssignedManagerId { get; set; }
     public string AssignedManagerName { get; set; }

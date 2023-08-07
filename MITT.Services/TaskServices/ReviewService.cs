@@ -15,16 +15,11 @@ public class ReviewService
     {
         var assignedBeTask = await _managementDb.AssignedBetasks
             .Include(x => x.Developer)
-            .FirstOrDefaultAsync(x => x.Id == Guid.Parse(addBeReview.AssignedTaskId), cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == Guid.Parse(addBeReview.AssignedTaskId), cancellationToken) ?? throw new Exception();
 
-        if (assignedBeTask is null) throw new Exception();
+        var backEndReview = BeReview.Create(assignedBeTask, addBeReview.Findings);
 
-        assignedBeTask.BeReviews.Add(new BeReview
-        {
-            AssignedBeTask = assignedBeTask,
-            Findings = addBeReview.Findings,
-            CreatedAt = addBeReview.CreatedAt
-        });
+        assignedBeTask.BeReviews.Add(backEndReview);
 
         await _managementDb.SaveChangesAsync(cancellationToken);
         return OperationResult.Valid();
@@ -34,21 +29,17 @@ public class ReviewService
     {
         var assignedQaTask = await _managementDb.AssignedQatasks
             .Include(x => x.Developer)
-            .FirstOrDefaultAsync(x => x.Id == Guid.Parse(addQaReview.AssignedTaskId), cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == Guid.Parse(addQaReview.AssignedTaskId), cancellationToken) ?? throw new Exception();
 
-        if (assignedQaTask is null) throw new Exception();
+        var qaReview = QaReview.Create(assignedQaTask, addQaReview.Findings);
 
-        assignedQaTask.QaReviews.Add(new QaReview
-        {
-            AssignedQaTask = assignedQaTask,
-            Findings = addQaReview.Findings,
-            CreatedAt = addQaReview.CreatedAt
-        });
+        assignedQaTask.QaReviews.Add(qaReview);
 
         await _managementDb.SaveChangesAsync(cancellationToken);
         return OperationResult.Valid();
     }
 }
+ 
 
 public class AddReviewDto
 {
@@ -56,5 +47,4 @@ public class AddReviewDto
     public string AssignedTaskId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.Now;
     public List<ReviewFinding> Findings { get; set; }
-    //public FileInfo File { get; set; }
 }

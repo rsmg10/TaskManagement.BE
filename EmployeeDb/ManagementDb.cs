@@ -18,11 +18,9 @@ namespace MITT.EmployeeDb
         public virtual DbSet<AssignedBeTask> AssignedBetasks { get; set; }
         public virtual DbSet<AssignedManager> AssignedManagers { get; set; }
         public virtual DbSet<AssignedQaTask> AssignedQatasks { get; set; }
-        public virtual DbSet<BeReview> Bereviews { get; set; }
         public virtual DbSet<Developer> Developers { get; set; }
         public virtual DbSet<Manager> Managers { get; set; }
         public virtual DbSet<Project> Projects { get; set; }
-        public virtual DbSet<QaReview> Qareviews { get; set; }
         public virtual DbSet<DevTask> Tasks { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -44,13 +42,13 @@ namespace MITT.EmployeeDb
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<QaReview>()
-                .Property(x => x.Findings)
-                .HasConversion(m => JsonConvert.SerializeObject(m), vm => JsonConvert.DeserializeObject<List<ReviewFinding>>(vm));
+            modelBuilder.Entity<AssignedBeTask>()
+                .Property(x => x.BeReviews)
+                .HasConversion(m => JsonConvert.SerializeObject(m), vm => JsonConvert.DeserializeObject<List<BeReview>>(vm));
 
-            modelBuilder.Entity<BeReview>()
-                .Property(x => x.Findings)
-                .HasConversion(m => JsonConvert.SerializeObject(m), vm => JsonConvert.DeserializeObject<List<ReviewFinding>>(vm));
+            modelBuilder.Entity<AssignedQaTask>()
+                .Property(x => x.QaReviews)
+                .HasConversion(m => JsonConvert.SerializeObject(m), vm => JsonConvert.DeserializeObject<List<QaReview>>(vm));
 
             modelBuilder.Entity<DevTask>()
                 .Property(x => x.Requirements)
@@ -114,39 +112,9 @@ namespace MITT.EmployeeDb
                     .HasForeignKey(d => d.ProjectManagerId);
             });
 
-            modelBuilder.Entity<BeReview>(entity =>
-            {
-                entity.ToTable("BEReviews");
-
-                entity.HasIndex(e => e.AssignedBeTaskId, "IX_BEReviews_AssignedBETaskId");
-
-                entity.Property(e => e.Id).ValueGeneratedNever();
-
-                entity.Property(e => e.AssignedBeTaskId).HasColumnName("AssignedBETaskId");
-
-                entity.HasOne(d => d.AssignedBeTask)
-                    .WithMany(p => p.BeReviews)
-                    .HasForeignKey(d => d.AssignedBeTaskId);
-            });
-
             modelBuilder.Entity<Project>(entity =>
             {
                 entity.Property(e => e.Id).ValueGeneratedNever();
-            });
-
-            modelBuilder.Entity<QaReview>(entity =>
-            {
-                entity.ToTable("QAReviews");
-
-                entity.HasIndex(e => e.AssignedQaTaskId, "IX_QAReviews_AssignedQATaskId");
-
-                entity.Property(e => e.Id).ValueGeneratedNever();
-
-                entity.Property(e => e.AssignedQaTaskId).HasColumnName("AssignedQATaskId");
-
-                entity.HasOne(d => d.AssignedQaTask)
-                    .WithMany(p => p.QaReviews)
-                    .HasForeignKey(d => d.AssignedQaTaskId);
             });
 
             modelBuilder.Entity<DevTask>(entity =>

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MITT.EmployeeDb.Migrations
 {
     [DbContext(typeof(ManagementDb))]
-    [Migration("20221228070310_init-4")]
-    partial class init4
+    [Migration("20230807080336_init")]
+    partial class init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -31,6 +31,9 @@ namespace MITT.EmployeeDb.Migrations
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("BeReviews")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -96,6 +99,9 @@ namespace MITT.EmployeeDb.Migrations
                     b.Property<Guid>("DeveloperId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("QaReviews")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("TaskState")
                         .HasColumnType("int");
 
@@ -111,34 +117,6 @@ namespace MITT.EmployeeDb.Migrations
                     b.ToTable("AssignedQATasks", (string)null);
                 });
 
-            modelBuilder.Entity("MITT.EmployeeDb.Models.BeReview", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("AssignedBeTaskId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("AssignedBETaskId");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("FilePath")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Findings")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex(new[] { "AssignedBeTaskId" }, "IX_BEReviews_AssignedBETaskId");
-
-                    b.ToTable("BEReviews", (string)null);
-                });
-
             modelBuilder.Entity("MITT.EmployeeDb.Models.DevTask", b =>
                 {
                     b.Property<Guid>("Id")
@@ -146,6 +124,9 @@ namespace MITT.EmployeeDb.Migrations
 
                     b.Property<Guid?>("AssignedManagerId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CommitTag")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CompletionMessage")
                         .HasColumnType("nvarchar(max)");
@@ -161,6 +142,12 @@ namespace MITT.EmployeeDb.Migrations
 
                     b.Property<int>("ImplementationType")
                         .HasColumnType("int");
+
+                    b.Property<string>("MainBranch")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MergeBranch")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
@@ -190,6 +177,7 @@ namespace MITT.EmployeeDb.Migrations
             modelBuilder.Entity("MITT.EmployeeDb.Models.Developer", b =>
                 {
                     b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("ActiveState")
@@ -201,16 +189,16 @@ namespace MITT.EmployeeDb.Migrations
                     b.Property<string>("Email")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("First")
+                    b.Property<string>("FullName")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid?>("IdentityId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Image")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Last")
+                    b.Property<bool>("IsSigned")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("NickName")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Phone")
@@ -227,39 +215,13 @@ namespace MITT.EmployeeDb.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex(new[] { "IdentityId" }, "IX_Developers_IdentityId");
-
                     b.ToTable("Developers");
-                });
-
-            modelBuilder.Entity("MITT.EmployeeDb.Models.Identity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Password")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UserName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Identities");
                 });
 
             modelBuilder.Entity("MITT.EmployeeDb.Models.Manager", b =>
                 {
                     b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("ActiveState")
@@ -271,16 +233,16 @@ namespace MITT.EmployeeDb.Migrations
                     b.Property<string>("Email")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("First")
+                    b.Property<string>("FullName")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid?>("IdentityId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Image")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Last")
+                    b.Property<bool>("IsSigned")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("NickName")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Phone")
@@ -293,8 +255,6 @@ namespace MITT.EmployeeDb.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
-
-                    b.HasIndex(new[] { "IdentityId" }, "IX_Managers_IdentityId");
 
                     b.ToTable("Managers");
                 });
@@ -322,34 +282,6 @@ namespace MITT.EmployeeDb.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Projects");
-                });
-
-            modelBuilder.Entity("MITT.EmployeeDb.Models.QaReview", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("AssignedQaTaskId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("AssignedQATaskId");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("FilePath")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Findings")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex(new[] { "AssignedQaTaskId" }, "IX_QAReviews_AssignedQATaskId");
-
-                    b.ToTable("QAReviews", (string)null);
                 });
 
             modelBuilder.Entity("MITT.EmployeeDb.Models.AssignedBeTask", b =>
@@ -409,17 +341,6 @@ namespace MITT.EmployeeDb.Migrations
                     b.Navigation("Developer");
                 });
 
-            modelBuilder.Entity("MITT.EmployeeDb.Models.BeReview", b =>
-                {
-                    b.HasOne("MITT.EmployeeDb.Models.AssignedBeTask", "AssignedBeTask")
-                        .WithMany("BeReviews")
-                        .HasForeignKey("AssignedBeTaskId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AssignedBeTask");
-                });
-
             modelBuilder.Entity("MITT.EmployeeDb.Models.DevTask", b =>
                 {
                     b.HasOne("MITT.EmployeeDb.Models.AssignedManager", "AssignedManager")
@@ -429,48 +350,9 @@ namespace MITT.EmployeeDb.Migrations
                     b.Navigation("AssignedManager");
                 });
 
-            modelBuilder.Entity("MITT.EmployeeDb.Models.Developer", b =>
-                {
-                    b.HasOne("MITT.EmployeeDb.Models.Identity", "Identity")
-                        .WithMany("Developers")
-                        .HasForeignKey("IdentityId");
-
-                    b.Navigation("Identity");
-                });
-
-            modelBuilder.Entity("MITT.EmployeeDb.Models.Manager", b =>
-                {
-                    b.HasOne("MITT.EmployeeDb.Models.Identity", "Identity")
-                        .WithMany("Managers")
-                        .HasForeignKey("IdentityId");
-
-                    b.Navigation("Identity");
-                });
-
-            modelBuilder.Entity("MITT.EmployeeDb.Models.QaReview", b =>
-                {
-                    b.HasOne("MITT.EmployeeDb.Models.AssignedQaTask", "AssignedQaTask")
-                        .WithMany("QaReviews")
-                        .HasForeignKey("AssignedQaTaskId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AssignedQaTask");
-                });
-
-            modelBuilder.Entity("MITT.EmployeeDb.Models.AssignedBeTask", b =>
-                {
-                    b.Navigation("BeReviews");
-                });
-
             modelBuilder.Entity("MITT.EmployeeDb.Models.AssignedManager", b =>
                 {
                     b.Navigation("Tasks");
-                });
-
-            modelBuilder.Entity("MITT.EmployeeDb.Models.AssignedQaTask", b =>
-                {
-                    b.Navigation("QaReviews");
                 });
 
             modelBuilder.Entity("MITT.EmployeeDb.Models.DevTask", b =>
@@ -485,13 +367,6 @@ namespace MITT.EmployeeDb.Migrations
                     b.Navigation("AssignedBetasks");
 
                     b.Navigation("AssignedQatasks");
-                });
-
-            modelBuilder.Entity("MITT.EmployeeDb.Models.Identity", b =>
-                {
-                    b.Navigation("Developers");
-
-                    b.Navigation("Managers");
                 });
 
             modelBuilder.Entity("MITT.EmployeeDb.Models.Manager", b =>

@@ -27,8 +27,12 @@ public class TaskController : BaseController
         => await _taskService.TaskNames(cancellationToken);
 
     [HttpPost]
-    public async Task<OperationResult> AddOrUpdateTask(TaskDto taskDto, CancellationToken cancellationToken = default)
-        => await _taskService.AddOrUpdateTask(taskDto, cancellationToken);
+    public async Task<OperationResult> AddTask(TaskDto taskDto, CancellationToken cancellationToken = default)
+        => await _taskService.AddTask(taskDto, cancellationToken);
+
+    [HttpPost]
+    public async Task<OperationResult> CompleteTaskByReviewer(CompleteTaskDto completeTaskDto, CancellationToken cancellationToken = default)
+        => await _taskService.CompleteTaskByReviewer(completeTaskDto, cancellationToken);
 
     [HttpPost]
     public async Task<OperationResult> AssignTask(AssignTaskDto assignTaskDto, CancellationToken cancellationToken = default) => assignTaskDto.AssignDevType switch

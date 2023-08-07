@@ -30,8 +30,8 @@ public class ProjectsService : ManagementService<Project>, IProjectsService
             foreach (var manager in managers) managerList.Add(new ProjectManagerVm
             {
                 Id = manager.Id.ToString(),
-                FullName = manager.ProjectManager.FullName(),
-                NickName = manager.ProjectManager.First,
+                FullName = manager.ProjectManager.FullName,
+                NickName = manager.ProjectManager.NickName,
                 Email = manager.ProjectManager.Email,
                 Phone = manager.ProjectManager.Phone,
                 ActiveTasks = await ManagerActiveTasks(manager.Id, cancellationToken)

@@ -28,10 +28,9 @@ public static class Extenstion
     {
         var origins = services.ConfigureCors();
         return services.AddCors(options => options.AddPolicy("CorsPolicy",
-            builder => builder.AllowAnyOrigin()
+            builder => builder
             .WithOrigins(origins)
             .AllowAnyMethod()
-            .AllowCredentials()
             .AllowAnyHeader()));
     }
 
