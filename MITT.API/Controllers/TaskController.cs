@@ -31,20 +31,26 @@ public class TaskController : BaseController
         => await _taskService.AddTask(taskDto, cancellationToken);
 
     [HttpPost]
-    public async Task<OperationResult> CompleteTaskByReviewer(CompleteTaskDto completeTaskDto, CancellationToken cancellationToken = default)
-        => await _taskService.CompleteTaskByReviewer(completeTaskDto, cancellationToken);
+    public async Task<OperationResult> AddReview(AddReviewDto addReviewDto, CancellationToken cancellationToken = default) => addReviewDto.AssignDevType switch
+    {
+        AssignDevType.Be => await _reviewService.AddBeReview(addReviewDto, cancellationToken),
+        AssignDevType.Qa => await _reviewService.AddQaReview(addReviewDto, cancellationToken),
+    };
 
     [HttpPost]
-    public async Task<OperationResult> AssignTask(AssignTaskDto assignTaskDto, CancellationToken cancellationToken = default) => assignTaskDto.AssignDevType switch
+    public async Task<OperationResult> Complete(CompleteTaskDto completeTaskDto, CancellationToken cancellationToken = default)
+        => await _taskService.CompleteTask(completeTaskDto, cancellationToken);
+
+
+    [HttpPost]
+    public async Task<OperationResult> Cancel(CancelTaskDto cancelTaskDto, CancellationToken cancellationToken = default)
+        => await _taskService.CancelTask(cancelTaskDto, cancellationToken);
+
+    [HttpPost]
+    public async Task<OperationResult> Assign(AssignTaskDto assignTaskDto, CancellationToken cancellationToken = default) => assignTaskDto.AssignDevType switch
     {
         AssignDevType.Be => await _taskAssignmentService.AssignBETask(assignTaskDto, cancellationToken),
         AssignDevType.Qa => await _taskAssignmentService.AssignQATask(assignTaskDto, cancellationToken),
     };
 
-    [HttpPost]
-    public async Task<OperationResult> AddReview(AddReviewDto addReviewDro, CancellationToken cancellationToken = default) => addReviewDro.AssignDevType switch
-    {
-        AssignDevType.Be => await _reviewService.AddBeReview(addReviewDro, cancellationToken),
-        AssignDevType.Qa => await _reviewService.AddQaReview(addReviewDro, cancellationToken),
-    };
 }

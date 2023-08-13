@@ -20,7 +20,7 @@ public class DeveloperService : ManagementService<Developer>, IDeveloperService
 
         Expression<Func<Developer, bool>> predicate = x => activeOnly ?
             x.ActiveState == ActiveState.Active :
-            x.ActiveState == ActiveState.Inactive && x.ActiveState == ActiveState.Active;
+            x != null;
 
         var developers = await _managementDb.Developers
             .OrderBy(x => x.Type == DeveloperType.Rv)
@@ -41,7 +41,7 @@ public class DeveloperService : ManagementService<Developer>, IDeveloperService
             Tasks = await AssignedTaskToDeveloper(developer, cancellationToken)
         });
 
-        return content;
+        return content.OrderByDescending(x => x.Tasks.Count).ToList();
     }
 
     public async Task<List<DeveloperVm>> Developers(string taskId, CancellationToken cancellationToken = default)
@@ -70,7 +70,7 @@ public class DeveloperService : ManagementService<Developer>, IDeveloperService
             Tasks = await AssignedTaskToDeveloper(developer, cancellationToken)
         });
 
-        return content;
+        return content.OrderByDescending(x => x.Tasks.Count).ToList();
     }
 
     public async Task<OperationResult> AddOrUpdateDeveloper(DeveloperDto developerDto, CancellationToken cancellationToken = default)

@@ -3,6 +3,7 @@ using MITT.EmployeeDb;
 using MITT.EmployeeDb.Models;
 using MITT.Services.Abstracts;
 using MITT.Services.Helpers;
+using System.Collections.Generic;
 
 namespace MITT.Services;
 
@@ -19,7 +20,11 @@ public class ManagerService : ManagementService<Manager>, IManagerService
         var type = Parse(projectType);
 
         var managers = projectType == ProjectTypeVm.All ?
-            await _managementDb.AssignedManagers.Include(x => x.ProjectManager).ToListAsync(cancellationToken) :
+            await _managementDb.Managers.Include(x => x.AssignedManagers).ThenInclude(x => x.Project).Select(x => new AssignedManager
+            {
+                Id = x.Id,
+                ProjectManager = x,
+            }).ToListAsync(cancellationToken) :
             await _managementDb.AssignedManagers
             .Include(x => x.ProjectManager)
             .Include(x => x.Project)
@@ -34,10 +39,10 @@ public class ManagerService : ManagementService<Manager>, IManagerService
             Phone = manager.ProjectManager.Phone,
             Email = manager.ProjectManager.Email,
             ActiveState = manager.ProjectManager.ActiveState,
-            ActiveTasks = await GetAssignedTasks(manager.ProjectManager, cancellationToken)
+            ActiveTasks = await GetAssignedTasks(manager.ProjectManager.Id, cancellationToken)
         });
 
-        return list;
+        return list.OrderByDescending(x => x.ActiveTasks).ToList();
     }
 
     public async Task<ManagersByProjectVm> Managers(string projectId, CancellationToken cancellationToken = default)
@@ -58,7 +63,7 @@ public class ManagerService : ManagementService<Manager>, IManagerService
             Phone = manager.ProjectManager.Phone,
             Email = manager.ProjectManager.Email,
             ActiveState = manager.ProjectManager.ActiveState,
-            ActiveTasks = await GetAssignedTasks(manager.ProjectManager, cancellationToken)
+            ActiveTasks = await GetAssignedTasks(manager.ProjectManager.Id, cancellationToken)
         });
 
         var freeManagersData = await _managementDb.Managers
@@ -80,8 +85,8 @@ public class ManagerService : ManagementService<Manager>, IManagerService
 
         return new ManagersByProjectVm
         {
-            AssignedManagers = assignedManagers,
-            FreeManagers = freeManagers
+            AssignedManagers = assignedManagers.OrderByDescending(x => x.ActiveTasks).ToList(),
+            FreeManagers = freeManagers.OrderByDescending(x => x.ActiveTasks).ToList()
         };
     }
 
@@ -147,11 +152,11 @@ public class ManagerService : ManagementService<Manager>, IManagerService
         return managers;
     }
 
-    private async Task<int> GetAssignedTasks(Manager manager, CancellationToken cancellationToken)
+    private async Task<int> GetAssignedTasks(Guid managerId, CancellationToken cancellationToken)
     {
         var assignedProjectCount = 0;
         var assignedProjects = await _managementDb.AssignedManagers
-            .Where(x => x.ProjectManagerId == manager.Id)
+            .Where(x => x.ProjectManagerId == managerId)
             .ToListAsync(cancellationToken);
 
         foreach (var projectManager in assignedProjects)
@@ -166,7 +171,7 @@ public class ManagerService : ManagementService<Manager>, IManagerService
         return assignedProjectCount;
     }
 
-    private ProjectType? Parse(ProjectTypeVm projectTypeVm) => projectTypeVm switch
+    private static ProjectType? Parse(ProjectTypeVm projectTypeVm) => projectTypeVm switch
     {
         ProjectTypeVm.Mb => ProjectType.Mb,
         ProjectTypeVm.Py => ProjectType.Py,

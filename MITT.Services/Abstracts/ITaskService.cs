@@ -10,16 +10,24 @@ public interface ITaskService
 
     Task<OperationResult> AddTask(TaskDto taskDto, CancellationToken cancellationToken = default);
 
-    Task<OperationResult> CompleteTaskByReviewer(CompleteTaskDto completeTaskDto, CancellationToken cancellationToken = default);
+    Task<OperationResult> CompleteTask(CompleteTaskDto completeTaskDto, CancellationToken cancellationToken = default);
+    Task<OperationResult> CancelTask(CancelTaskDto cancelTaskDto, CancellationToken cancellationToken = default);
 }
 
-public class CompleteTaskDto
+public class CompleteTaskDto: CancelTaskDto
+{
+    public string CommitTag { get; set; }
+}
+
+
+public class CancelTaskDto
 {
     public string ReviewerId { get; set; }
     public string TaskId { get; set; }
     public string Message { get; set; }
-    public string CommitTag { get; set; }
 }
+
+
 
 public class AssignTaskDto
 {

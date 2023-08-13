@@ -48,7 +48,7 @@ public class TaskService : ManagementService<DevTask>, ITaskService
         });
 
         return list.OrderBy(x => x.SeqNo)
-            .ThenBy(x => x.AssignedBeDevs)
+            .ThenBy(x => x.AssignedBeDevs.Count)
             .ToList();
     }
 
@@ -93,22 +93,45 @@ public class TaskService : ManagementService<DevTask>, ITaskService
         return OperationResult.Valid();
     }
 
-    public async Task<OperationResult> CompleteTaskByReviewer(CompleteTaskDto completeTaskDto, CancellationToken cancellationToken = default)
+    public async Task<OperationResult> CompleteTask(CompleteTaskDto completeTaskDto, CancellationToken cancellationToken = default)
     {
-        var reviewer = await _managementDb.Developers.FirstOrDefaultAsync(x => x.Id == Guid.Parse(completeTaskDto.ReviewerId) && x.Type == DeveloperType.Rv, cancellationToken) ?? throw new Exception("invalid_reviewer_id!!");
-        var task = await _managementDb.Tasks.FirstOrDefaultAsync(x => x.Id == Guid.Parse(completeTaskDto.TaskId) && x.TaskState == TaskState.Pending, cancellationToken) ?? throw new Exception("invalid_task_id!!");
-
-        if (string.IsNullOrEmpty(completeTaskDto.Message)) task.TaskState = TaskState.Completed;
-        else
+        try
         {
-            task.TaskState = TaskState.Canceled;
-            task.CompletionMessage = completeTaskDto.Message;
+            var reviewer = await _managementDb.Developers.FirstOrDefaultAsync(x => /*x.Id == Guid.Parse(cancelTaskDto.ReviewerId) &&*/ x.Type == DeveloperType.Rv, cancellationToken) ?? throw new Exception("invalid_reviewer_id!!");
+            var task = await _managementDb.Tasks.FirstOrDefaultAsync(x => x.Id == Guid.Parse(completeTaskDto.TaskId) && x.TaskState == TaskState.Pending, cancellationToken) ?? throw new Exception("invalid_task_id!!");
+
+            task.CompletionMessage = completeTaskDto.Message ?? TaskState.Completed.ToString();
             task.CommitTag = completeTaskDto.CommitTag;
+            task.TaskState = TaskState.Completed;
+
+            await Update(task, cancellationToken);
+
+            return OperationResult.Valid();
         }
+        catch (Exception e)
+        {
+            return OperationResult.UnValid(messages: new string[] { e.Message });
+        }
+    }
 
-        await Update(task, cancellationToken);
+    public async Task<OperationResult> CancelTask(CancelTaskDto cancelTaskDto, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var reviewer = await _managementDb.Developers.FirstOrDefaultAsync(x => /*x.Id == Guid.Parse(cancelTaskDto.ReviewerId) &&*/ x.Type == DeveloperType.Rv, cancellationToken) ?? throw new Exception("invalid_reviewer_id!!");
+            var task = await _managementDb.Tasks.FirstOrDefaultAsync(x => x.Id == Guid.Parse(cancelTaskDto.TaskId) && x.TaskState == TaskState.Pending, cancellationToken) ?? throw new Exception("invalid_task_id!!");
 
-        return OperationResult.Valid();
+            task.CompletionMessage = cancelTaskDto.Message ?? TaskState.Completed.ToString();
+            task.TaskState = TaskState.Canceled;
+
+            await Update(task, cancellationToken);
+
+            return OperationResult.Valid();
+        }
+        catch (Exception e)
+        {
+            return OperationResult.UnValid(messages: new string[] { e.Message });
+        }
     }
 
     #region helpers

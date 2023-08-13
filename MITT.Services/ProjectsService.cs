@@ -48,7 +48,8 @@ public class ProjectsService : ManagementService<Project>, IProjectsService
         }
 
         return projectList
-            .OrderBy(x => x.ProjectType)
+            .OrderBy(x => x.Managers.Count)
+            .ThenBy(x => (int)x.ProjectType)
             .ToList();
     }
 
