@@ -38,7 +38,7 @@ public class DeveloperService : ManagementService<Developer>, IDeveloperService
             Pin = developer.Pin,
             Type = developer.Type,
             ActiveState = developer.ActiveState,
-            Tasks = await AssignedTaskToDeveloper(developer, cancellationToken)
+            Tasks = await AssignedTaskToDeveloper(developer, activeOnly, cancellationToken)
         });
 
         return content.OrderByDescending(x => x.Tasks.Count).ToList();
@@ -67,10 +67,10 @@ public class DeveloperService : ManagementService<Developer>, IDeveloperService
             Pin = developer.Pin,
             Type = developer.Type,
             ActiveState = developer.ActiveState,
-            Tasks = await AssignedTaskToDeveloper(developer, cancellationToken)
+            Tasks = await AssignedTaskToDeveloper(developer, true, cancellationToken)
         });
 
-        return content.OrderByDescending(x => x.Tasks.Count).ToList();
+        return content;
     }
 
     public async Task<OperationResult> AddOrUpdateDeveloper(DeveloperDto developerDto, CancellationToken cancellationToken = default)
@@ -103,15 +103,19 @@ public class DeveloperService : ManagementService<Developer>, IDeveloperService
         return OperationResult.Valid();
     }
 
-    private async Task<List<DeveloperTaskVm>> AssignedTaskToDeveloper(Developer developer, CancellationToken cancellationToken = default)
+    private async Task<List<DeveloperTaskVm>> AssignedTaskToDeveloper(Developer developer, bool activeOnly, CancellationToken cancellationToken = default)
     {
         var list = new List<DeveloperTaskVm>();
 
         switch (developer.Type)
         {
             case DeveloperType.Be:
+                Expression<Func<AssignedBeTask, bool>> bePredicate = x => activeOnly ?
+                    x.DevTask.TaskState == TaskState.Pending && x.Developer == developer :
+                    x.Developer == developer;
+
                 var beTasks = await _managementDb.AssignedBetasks
-                    .Where(x => x.Developer == developer && x.TaskState == TaskState.Pending)
+                    .Where(bePredicate)
                     .Include(x => x.DevTask)
                     .ThenInclude(x => x.AssignedManager)
                     .ThenInclude(x => x.ProjectManager)
@@ -133,8 +137,11 @@ public class DeveloperService : ManagementService<Developer>, IDeveloperService
                 break;
 
             case DeveloperType.Qa:
+                Expression<Func<AssignedQaTask, bool>> qaPredicate = x => activeOnly ?
+                    x.DevTask.TaskState == TaskState.Pending && x.Developer == developer :
+                    x.Developer == developer;
                 var qaTasks = await _managementDb.AssignedQatasks
-                    .Where(x => x.Developer == developer && x.TaskState == TaskState.Pending)
+                    .Where(qaPredicate)
                     .Include(x => x.DevTask)
                     .ThenInclude(x => x.AssignedManager)
                     .ThenInclude(x => x.ProjectManager)
@@ -156,7 +163,7 @@ public class DeveloperService : ManagementService<Developer>, IDeveloperService
 
                 break;
         }
-        return list;
+        return list.OrderBy(x => x.TaskState).ToList();
     }
 
     public async Task<OperationResult> ChangeState(string developerId, CancellationToken cancellationToken = default)

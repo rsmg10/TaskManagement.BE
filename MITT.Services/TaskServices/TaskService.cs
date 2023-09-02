@@ -15,11 +15,11 @@ public class TaskService : ManagementService<DevTask>, ITaskService
 
     public TaskService(ManagementDb managementDb) : base(managementDb) => _managementDb = managementDb;
 
-    public async Task<List<TaskVm>> Tasks(string projectId, string developerId, bool activeOnly = true, CancellationToken cancellationToken = default)
+    public async Task<List<TaskVm>> Tasks(string projectId, string developerId, TaskState? taskState, CancellationToken cancellationToken = default)
     {
         var list = new List<TaskVm>();
 
-        List<DevTask> tasks = await GetTasks(projectId, developerId, cancellationToken);
+        List<DevTask> tasks = await GetTasks(projectId, developerId, taskState, cancellationToken);
 
         foreach (var task in tasks) list.Add(new TaskVm
         {
@@ -40,15 +40,14 @@ public class TaskService : ManagementService<DevTask>, ITaskService
             TaskState = task.TaskState,
             AssignedProjectId = task.AssignedManager.ProjectId.ToString(),
             AssignedProjectName = task.AssignedManager.Project.Name,
-            AssignedBeDevs = await GetAssignedBeDevs(task.Id),
-            AssignedQaDevs = await GetAssignedQaDevs(task),
             TimeLeft = string.Empty,
             Progress = string.Empty,
-            TimeAllow = 0
+            TimeAllow = 0,
+            AssignedBeDevs = await GetAssignedBeDevs(task.Id),
+            AssignedQaDevs = await GetAssignedQaDevs(task),
         });
 
-        return list.OrderBy(x => x.SeqNo)
-            .ThenBy(x => x.AssignedBeDevs.Count)
+        return list.OrderBy(x => x.TaskState)
             .ToList();
     }
 
@@ -60,7 +59,7 @@ public class TaskService : ManagementService<DevTask>, ITaskService
         {
             Id = x.Id.ToString(),
             SeqNo = x.SeqNo,
-            Name = x.Name,
+            Name = $"{x.AssignedManager.Project.ProjectType}  ==>  {x.AssignedManager.Project.Name}  ==>  {x.Name}",
             MainBranch = x.MainBranch,
             MergeBranch = x.MergeBranch,
             StartDate = x.StartDate,
@@ -75,7 +74,7 @@ public class TaskService : ManagementService<DevTask>, ITaskService
             .Include(x => x.Project)
             .FirstOrDefaultAsync(x => x.Id == Guid.Parse(taskDto.AssignedManagerId), cancellationToken) ?? throw new Exception($"invalid_manager_id!!");
 
-        var seqNo = await _managementDb.GenerateSequance(manager.Project.ProjectType);
+        var seqNo = await _managementDb.GenerateSequence(manager.Project.ProjectType);
 
         var entity = DevTask.Create(seqNo,
                                     taskDto.Name,
@@ -136,7 +135,7 @@ public class TaskService : ManagementService<DevTask>, ITaskService
 
     #region helpers
 
-    private async Task<List<DevTask>> GetTasks(string projectId, string developerId, CancellationToken cancellationToken)
+    private async Task<List<DevTask>> GetTasks(string projectId, string developerId, TaskState? taskState, CancellationToken cancellationToken)
     {
         if (Guid.TryParse(projectId, out var project))
         {
@@ -145,7 +144,7 @@ public class TaskService : ManagementService<DevTask>, ITaskService
                 .ThenInclude(x => x.ProjectManager)
                 .Include(x => x.AssignedManager)
                 .ThenInclude(x => x.Project)
-                .Where(x => x.AssignedManager.ProjectId == project)
+                .Where(x => x.AssignedManager.ProjectId == project && taskState != null ? x.TaskState == taskState : x != null)
                 .ToListAsync(cancellationToken);
         }
 
@@ -175,7 +174,7 @@ public class TaskService : ManagementService<DevTask>, ITaskService
             .ThenInclude(x => x.ProjectManager)
             .Include(x => x.AssignedManager)
             .ThenInclude(x => x.Project)
-            .Where(x => x.TaskState == TaskState.Pending)
+            .Where(x => taskState != null ? x.TaskState == taskState : x != null)
             .ToListAsync(cancellationToken);
     }
 
