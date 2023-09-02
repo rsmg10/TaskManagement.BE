@@ -69,6 +69,17 @@ public class GitLabClient
 
         return response.StatusCode > HttpStatusCode.OK && response.StatusCode < HttpStatusCode.IMUsed;
     }
+
+    public async Task<List<ProjectTags>> GetProjectTags(string projectId = "47123376")
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, $"https://gitlab.com/api/v4/projects/{projectId}/repository/tags");
+        request.Headers.Add("PRIVATE-TOKEN", _privateToken);
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        var content = await response.Content.ReadAsStringAsync();
+
+        return JsonConvert.DeserializeObject<List<ProjectTags>>(content);
+    }
 }
 
 public enum IssueState

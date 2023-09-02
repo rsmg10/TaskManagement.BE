@@ -2,12 +2,18 @@
 
 using MITT.GitLabClient;
 
-IGitLabClient myClient = new GitLabClient(new HttpClient());
+IGitLabClient gitLabClient = new GitLabClient(new HttpClient());
 
-var branches = await myClient.Branches();
+var projects = await gitLabClient.Projects();
 
-var issues = await myClient.Issues();
+foreach (var project in projects)
+{
+    var branches = await gitLabClient.Branches(projectId: project.Id.ToString());
+    var issuesStatistics = await gitLabClient.IssuesStatistics(projectId: project.Id.ToString());
+    var projectIssues = await gitLabClient.ProjectIssues(projectId: project.Id.ToString());
+    var tags = await gitLabClient.GetProjectTags(projectId: project.Id.ToString());
+}
 
-var issuesStatistics = await myClient.IssuesStatistics();
+var issues = await gitLabClient.Issues();
 
-Console.WriteLine($"{branches.Count} folks love work!");
+Console.ReadLine();

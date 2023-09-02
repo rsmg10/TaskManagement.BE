@@ -1,31 +1,73 @@
-﻿using MITT.GitLabClient.Models;
+﻿using Microsoft.Extensions.Options;
+using MITT.GitLabClient.Models;
 using Newtonsoft.Json;
 using System.Net;
 
 namespace MITT.GitLabClient;
 
+public class GitLabOption
+{
+    public string PrivateToken { get; set; } = "glpat-TyQzNrWkBYibZXo2dERw";
+}
+
 public interface IGitLabClient
 {
-    Task<bool> AddIssue(AddIssue addIssue);
+    Task<List<Branch>> Branches(string projectId = "49012507");
 
-    Task<List<Branch>> Branches(string projectId = "47123376");
+    Task<List<ProjectTags>> GetProjectTags(string projectId = "49012507");
 
     Task<List<Issue>> Issues(string assigneeId = "14940892", IssueState state = IssueState.all, string labels = "bug");
 
-    Task<IssuesStatistics> IssuesStatistics(string projectId = "47123376");
+    Task<IssuesStatistics> IssuesStatistics(string projectId = "49012507");
+
+    Task<bool> AddIssue(AddIssue addIssue);
+
+    Task<List<Issue>> ProjectIssues(string projectId);
+
+    Task<List<Project>> Projects(string? projectId = null);
 }
 
 public class GitLabClient : IGitLabClient
 {
     private readonly HttpClient _httpClient;
-    private static readonly string PrivateToken = "glpat-TyQzNrWkBYibZXo2dERw";
+    private readonly string PrivateToken;
 
-    public GitLabClient(HttpClient httpClient) => _httpClient = httpClient;
+    public GitLabClient(HttpClient httpClient, IOptions<GitLabOption>? options = null)
+    {
+        PrivateToken = options?.Value.PrivateToken ?? "glpat-TyQzNrWkBYibZXo2dERw";
+        _httpClient = httpClient;
 
-    public async Task<List<Branch>> Branches(string projectId = "47123376")
+        httpClient.DefaultRequestHeaders.Add("PRIVATE-TOKEN", PrivateToken);
+    }
+
+    public async Task<List<Project>> Projects(string? projectId = null)
+    {
+        var url = projectId is null ? "https://gitlab.com/api/v4/projects?owned=true" : $"https://gitlab.com/api/v4/projects/{projectId}";
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        var content = await response
+            .EnsureSuccessStatusCode()
+            .Content
+            .ReadAsStringAsync();
+
+        List<Project> result = new();
+
+        switch (projectId)
+        {
+            case not null:
+                result.Add(JsonConvert.DeserializeObject<Project>(content));
+                return result;
+
+            default:
+                return JsonConvert.DeserializeObject<List<Project>>(content);
+        }
+    }
+
+    public async Task<List<Branch>> Branches(string projectId = "49012507")
     {
         var request = new HttpRequestMessage(HttpMethod.Get, $"https://gitlab.com/api/v4/projects/{projectId}/repository/branches");
-        request.Headers.Add("PRIVATE-TOKEN", PrivateToken);
         var response = await _httpClient.SendAsync(request);
 
         var content = await response
@@ -36,10 +78,23 @@ public class GitLabClient : IGitLabClient
         return JsonConvert.DeserializeObject<List<Branch>>(content);
     }
 
+    public async Task<List<Issue>> ProjectIssues(string projectId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, $"https://gitlab.com/api/v4/projects/{projectId}/issues");
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        var content = await response
+            .EnsureSuccessStatusCode()
+            .Content
+            .ReadAsStringAsync();
+
+        return JsonConvert.DeserializeObject<List<Issue>>(content);
+    }
+
     public async Task<List<Issue>> Issues(string assigneeId = "14940892", IssueState state = IssueState.all, string labels = "bug")
     {
         var request = new HttpRequestMessage(HttpMethod.Get, $"https://gitlab.com/api/v4/issues?assignee_id={assigneeId}&state={state}&labels={labels}");
-        request.Headers.Add("PRIVATE-TOKEN", PrivateToken);
         var response = await _httpClient.SendAsync(request);
 
         var content = await response.EnsureSuccessStatusCode().Content.ReadAsStringAsync();
@@ -47,11 +102,10 @@ public class GitLabClient : IGitLabClient
         return JsonConvert.DeserializeObject<List<Issue>>(content);
     }
 
-    public async Task<IssuesStatistics> IssuesStatistics(string projectId = "47123376")
+    public async Task<IssuesStatistics> IssuesStatistics(string projectId = "49012507")
     {
         var url = projectId is not null ? $"https://gitlab.com/api/v4/projects/{projectId}/issues_statistics" : "https://gitlab.com/api/v4/issues_statistics";
         var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Add("PRIVATE-TOKEN", PrivateToken);
         var response = await _httpClient.SendAsync(request);
         response.EnsureSuccessStatusCode();
         var content = await response.Content.ReadAsStringAsync();
@@ -61,15 +115,25 @@ public class GitLabClient : IGitLabClient
 
     public async Task<bool> AddIssue(AddIssue addIssue)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, $"https://gitlab.com/api/v4/projects/{addIssue.ProjectId}/issues");
-        request.Headers.Add("PRIVATE-TOKEN", PrivateToken);
-
-        request.Content = new StringContent(JsonConvert.SerializeObject(addIssue));
+        var request = new HttpRequestMessage(HttpMethod.Post, $"https://gitlab.com/api/v4/projects/{addIssue.ProjectId}/issues")
+        {
+            Content = new StringContent(JsonConvert.SerializeObject(addIssue))
+        };
         var response = await _httpClient.SendAsync(request);
 
         response.EnsureSuccessStatusCode();
 
         return response.StatusCode > HttpStatusCode.OK && response.StatusCode < HttpStatusCode.IMUsed;
+    }
+
+    public async Task<List<ProjectTags>> GetProjectTags(string projectId = "49012507")
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, $"https://gitlab.com/api/v4/projects/{projectId}/repository/tags");
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        var content = await response.Content.ReadAsStringAsync();
+
+        return JsonConvert.DeserializeObject<List<ProjectTags>>(content);
     }
 }
 
