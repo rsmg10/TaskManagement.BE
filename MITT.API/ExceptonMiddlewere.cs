@@ -27,7 +27,6 @@ public class ExceptonMiddlewere
                 UnauthorizedAccessException _ => new Errors.ExceptionResponse(HttpStatusCode.Unauthorized, "Unauthorized."),
                 _ => new Errors.ExceptionResponse(HttpStatusCode.InternalServerError, "Internal server error. Please retry later.")
             };
-            
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = (int)response.StatusCode;
             await context.Response.WriteAsJsonAsync(response);
