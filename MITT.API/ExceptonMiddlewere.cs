@@ -1,5 +1,6 @@
 using System.Net;
 using MITT.EmployeeDb.Models;
+using MITT.Services.Abstracts;
 
 namespace MITT.API;
 
@@ -22,13 +23,24 @@ public class ExceptonMiddlewere
         {
             var response = e switch
             {
-                ApplicationException _ => new Errors.ExceptionResponse(HttpStatusCode.BadRequest, "Application exception occurred."),
-                KeyNotFoundException _ => new Errors.ExceptionResponse(HttpStatusCode.NotFound, "The request key not found."),
-                UnauthorizedAccessException _ => new Errors.ExceptionResponse(HttpStatusCode.Unauthorized, "Unauthorized."),
-                _ => new Errors.ExceptionResponse(HttpStatusCode.InternalServerError, "Internal server error. Please retry later.")
+                ApplicationException _ => new OperationResult(OperationResult.ResultType.TechError,
+                    new List<string>{"Application exception occurred."}),
+                KeyNotFoundException _ => new OperationResult(OperationResult.ResultType.TechError,
+                    new List<string>{"The request key not found."}),
+                UnauthorizedAccessException _ => new OperationResult(OperationResult.ResultType.Unauthorized,
+                    new List<string>{"Unauthorized."}),
+                _ => new OperationResult(OperationResult.ResultType.TechError,
+                    new List<string>{"Internal server error. Please retry later."})
             };
             context.Response.ContentType = "application/json";
-            context.Response.StatusCode = (int)response.StatusCode;
+
+            var result = response.Type switch
+            {
+                OperationResult.ResultType.Success => context.Response.StatusCode = (int)HttpStatusCode.OK,
+                OperationResult.ResultType.TechError => context.Response.StatusCode = (int)HttpStatusCode.BadRequest,
+                _ => context.Response.StatusCode = (int)HttpStatusCode.Unauthorized,
+            };
+                
             await context.Response.WriteAsJsonAsync(response);
         }
     }
