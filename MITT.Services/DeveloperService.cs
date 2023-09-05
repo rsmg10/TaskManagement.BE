@@ -23,8 +23,8 @@ public class DeveloperService : ManagementService<Developer>, IDeveloperService
             x != null;
 
         var developers = await _managementDb.Developers
-            .OrderBy(x => x.Type == DeveloperType.Rv)
-            .ThenBy(x => x.Type == DeveloperType.Be)
+            .OrderBy(x => x.DevType == DeveloperType.Rv)
+            .ThenBy(x => x.DevType == DeveloperType.Be)
             .Where(predicate)
             .ToListAsync(cancellationToken);
 
@@ -36,7 +36,7 @@ public class DeveloperService : ManagementService<Developer>, IDeveloperService
             Email = developer.Email,
             Phone = developer.Phone,
             Pin = developer.Pin,
-            Type = developer.Type,
+            Type = developer.DevType,
             ActiveState = developer.ActiveState,
             Tasks = await AssignedTaskToDeveloper(developer, activeOnly, cancellationToken)
         });
@@ -54,7 +54,7 @@ public class DeveloperService : ManagementService<Developer>, IDeveloperService
             .ToListAsync(cancellationToken);
 
         var developers = await _managementDb.Developers
-            .Where(x => x.ActiveState == ActiveState.Active && !assignedDeveloperIds.Contains(x.Id) && x.Type == DeveloperType.Be || x.Type == DeveloperType.Qa)
+            .Where(x => x.ActiveState == ActiveState.Active && !assignedDeveloperIds.Contains(x.Id) && x.DevType == DeveloperType.Be || x.DevType == DeveloperType.Qa)
             .ToListAsync(cancellationToken);
 
         foreach (var developer in developers) content.Add(new DeveloperVm
@@ -65,7 +65,7 @@ public class DeveloperService : ManagementService<Developer>, IDeveloperService
             Email = developer.Email,
             Phone = developer.Phone,
             Pin = developer.Pin,
-            Type = developer.Type,
+            Type = developer.DevType,
             ActiveState = developer.ActiveState,
             Tasks = await AssignedTaskToDeveloper(developer, true, cancellationToken)
         });
@@ -107,7 +107,7 @@ public class DeveloperService : ManagementService<Developer>, IDeveloperService
     {
         var list = new List<DeveloperTaskVm>();
 
-        switch (developer.Type)
+        switch (developer.DevType)
         {
             case DeveloperType.Be:
                 Expression<Func<AssignedBeTask, bool>> bePredicate = x => activeOnly ?

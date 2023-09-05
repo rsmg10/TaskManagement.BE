@@ -96,7 +96,7 @@ public class TaskService : ManagementService<DevTask>, ITaskService
     {
         try
         {
-            var reviewer = await _managementDb.Developers.FirstOrDefaultAsync(x => /*x.Id == Guid.Parse(cancelTaskDto.ReviewerId) &&*/ x.Type == DeveloperType.Rv, cancellationToken) ?? throw new Exception("invalid_reviewer_id!!");
+            var reviewer = await _managementDb.Developers.FirstOrDefaultAsync(x => /*x.Id == Guid.Parse(cancelTaskDto.ReviewerId) &&*/ x.DevType == DeveloperType.Rv, cancellationToken) ?? throw new Exception("invalid_reviewer_id!!");
             var task = await _managementDb.Tasks.FirstOrDefaultAsync(x => x.Id == Guid.Parse(completeTaskDto.TaskId) && x.TaskState == TaskState.Pending, cancellationToken) ?? throw new Exception("invalid_task_id!!");
 
             task.CompletionMessage = completeTaskDto.Message ?? TaskState.Completed.ToString();
@@ -117,7 +117,7 @@ public class TaskService : ManagementService<DevTask>, ITaskService
     {
         try
         {
-            var reviewer = await _managementDb.Developers.FirstOrDefaultAsync(x => /*x.Id == Guid.Parse(cancelTaskDto.ReviewerId) &&*/ x.Type == DeveloperType.Rv, cancellationToken) ?? throw new Exception("invalid_reviewer_id!!");
+            var reviewer = await _managementDb.Developers.FirstOrDefaultAsync(x => /*x.Id == Guid.Parse(cancelTaskDto.ReviewerId) &&*/ x.DevType == DeveloperType.Rv, cancellationToken) ?? throw new Exception("invalid_reviewer_id!!");
             var task = await _managementDb.Tasks.FirstOrDefaultAsync(x => x.Id == Guid.Parse(cancelTaskDto.TaskId) && x.TaskState == TaskState.Pending, cancellationToken) ?? throw new Exception("invalid_task_id!!");
 
             task.CompletionMessage = cancelTaskDto.Message ?? TaskState.Completed.ToString();
@@ -152,7 +152,7 @@ public class TaskService : ManagementService<DevTask>, ITaskService
         {
             var dev = await _managementDb.Developers.FirstOrDefaultAsync(x => x.Id == developer, cancellationToken);
 
-            return dev.Type == DeveloperType.Be ?
+            return dev.DevType == DeveloperType.Be ?
              await _managementDb.Tasks
                 .Include(x => x.AssignedManager)
                 .ThenInclude(x => x.ProjectManager)

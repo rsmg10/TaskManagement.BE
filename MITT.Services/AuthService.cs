@@ -114,10 +114,10 @@ public class AuthService : IAuthService
 
 public static class Ext
 {
-    public static async Task<(Identity identity, DeveloperType type)> GetIdentity(this ManagementDb managementDb, string phone, CancellationToken cancellationToken)
+    public static async Task<(Employee identity, DeveloperType type)> GetIdentity(this ManagementDb managementDb, string phone, CancellationToken cancellationToken)
     {
         var developer = await managementDb.GetDeveloper(phone, cancellationToken);
-        if (developer is not null) return (developer, developer.Type);
+        // if (developer is not null) return (developer, developer.Type);
         var manager = await managementDb.GetManager(phone, cancellationToken);
         if (manager is not null) return (manager, DeveloperType.Pm);
 

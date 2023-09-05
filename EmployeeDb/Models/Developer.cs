@@ -1,18 +1,16 @@
 ﻿namespace MITT.EmployeeDb.Models
 {
-    public partial class Developer : Identity
+    public partial class Developer : Employee
     {
         public Developer()
         {
             AssignedBetasks = new HashSet<AssignedBeTask>();
-            AssignedQatasks = new HashSet<AssignedQaTask>();
+            // AssignedQatasks = new HashSet<AssignedQaTask>();
         }
-
-        public DeveloperType Type { get; set; }
+        // public hierarchyid  Hierarchyid { get; set; }
+        public DeveloperType DevType { get; set; }
         public string Image { get; set; }
-        public ActiveState ActiveState { get; set; } = ActiveState.Active;
         public virtual ICollection<AssignedBeTask> AssignedBetasks { get; set; }
-        public virtual ICollection<AssignedQaTask> AssignedQatasks { get; set; }
 
         public static Developer Create(string fullName, string nickName, string email, string phone, string pin, DeveloperType developerType) => new()
         {
@@ -22,7 +20,7 @@
             Email = email,
             Phone = phone,
             Pin = pin,
-            Type = developerType,
+            DevType = developerType,
             CreatedAt = DateTime.Now
         };
 
@@ -32,7 +30,7 @@
             NickName = nickName;
             Phone = email;
             Email = email;
-            Type = developerType;
+            DevType = developerType;
             UpdatedAt = DateTime.Now;
         }
     }

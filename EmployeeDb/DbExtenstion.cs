@@ -16,7 +16,12 @@ public static class DbExtenstion
 
         if (string.IsNullOrEmpty(employeeDbConnectionString)) throw new Exception($"connection string for {nameof(ManagementDb)} is missing from the appsettings.json file!!");
 
-        services.AddDbContext<ManagementDb>(opt => opt.UseSqlServer(employeeDbConnectionString, x => x.MigrationsHistoryTable("__MigrationsHistoryForEmployeeDbContext", "migrations"))
+        services.AddDbContext<ManagementDb>(opt 
+            => opt.UseSqlServer(employeeDbConnectionString, x =>
+                {
+                    // x.UseHierarchyId();
+                    x.MigrationsHistoryTable("__MigrationsHistoryForEmployeeDbContext", "migrations");
+                })
            .EnableDetailedErrors()
            .EnableSensitiveDataLogging());
 

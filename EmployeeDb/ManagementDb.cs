@@ -1,5 +1,6 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using MITT.EmployeeDb.Models;
 using Newtonsoft.Json;
 
@@ -20,6 +21,7 @@ namespace MITT.EmployeeDb
         public virtual DbSet<AssignedQaTask> AssignedQatasks { get; set; }
         public virtual DbSet<Developer> Developers { get; set; }
         public virtual DbSet<Manager> Managers { get; set; }
+        public virtual DbSet<QA> QA { get; set; }
         public virtual DbSet<Project> Projects { get; set; }
         public virtual DbSet<DevTask> Tasks { get; set; }
 
@@ -42,6 +44,17 @@ namespace MITT.EmployeeDb
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<Manager>().ToTable("Employees");
+            modelBuilder.Entity<Developer>().ToTable("Employees");
+            modelBuilder.Entity<QA>().ToTable("Employees");
+            modelBuilder.Entity<Employee>()
+                .HasBaseType((Type)null)
+                .ToTable("Employees")
+                .HasDiscriminator<EmployeeType>(employee => employee.EmployeeType)
+                .HasValue<Developer>(EmployeeType.Developer)
+                .HasValue<Manager>(EmployeeType.PM)
+                .HasValue<QA>(EmployeeType.QA);
+            
             modelBuilder.Entity<AssignedBeTask>()
                 .Property(x => x.BeReviews)
                 .HasConversion(m => JsonConvert.SerializeObject(m), vm => JsonConvert.DeserializeObject<List<BeReview>>(vm));
@@ -88,11 +101,13 @@ namespace MITT.EmployeeDb
 
                 entity.HasOne(d => d.DevTask)
                     .WithMany(p => p.AssignedQatasks)
-                    .HasForeignKey(d => d.DevTaskId);
-
-                entity.HasOne(d => d.Developer)
-                    .WithMany(p => p.AssignedQatasks)
-                    .HasForeignKey(d => d.DeveloperId);
+                    .HasForeignKey(d => d.DevTaskId)
+                    .OnDelete(DeleteBehavior.NoAction);;
+                
+                entity.HasOne(d => d.Qa)
+                    .WithMany(p => p.AssignedQaTasks)
+                    .HasForeignKey(d => d.QaId)
+                    .OnDelete(DeleteBehavior.NoAction);
             });
 
             modelBuilder.Entity<AssignedManager>(entity =>
