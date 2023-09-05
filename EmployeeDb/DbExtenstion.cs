@@ -19,8 +19,8 @@ public static class DbExtenstion
         services.AddDbContext<ManagementDb>(opt 
             => opt.UseSqlServer(employeeDbConnectionString, x =>
                 {
-                    // x.UseHierarchyId();
                     x.MigrationsHistoryTable("__MigrationsHistoryForEmployeeDbContext", "migrations");
+                    x.UseHierarchyId();
                 })
            .EnableDetailedErrors()
            .EnableSensitiveDataLogging());

@@ -12,6 +12,7 @@
   </ItemGroup>-->
 
   <ItemGroup>
+    <ProjectReference Include="..\EmployeeDb\MITT.EmployeeDb.csproj" />
     <ProjectReference Include="..\MITT.GitLabClient\MITT.GitLabClient.csproj" />
   </ItemGroup>
 

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Security.Principal;
+using Microsoft.EntityFrameworkCore;
 
 namespace MITT.EmployeeDb.Models;
 
@@ -19,8 +20,10 @@ public abstract class Employee : BaseEntity
     public string Phone { get; set; }
     public string Pin { get; set; }
     
-    // public HierarchyId HierarchyId { get; set; }
-    
+    //
+    // public Guid ManagerId { get; set; }
+    // public Employee Manager { get; set; }
+    public HierarchyId HierarchyId { get; set; }
     public EmployeeType EmployeeType { get; set; }
     public bool IsSigned { get; set; } = false;
     public bool IsReviewer { get; set; } = false;

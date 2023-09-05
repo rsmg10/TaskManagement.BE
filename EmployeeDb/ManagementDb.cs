@@ -19,7 +19,7 @@ namespace MITT.EmployeeDb
         public virtual DbSet<AssignedBeTask> AssignedBetasks { get; set; }
         public virtual DbSet<AssignedManager> AssignedManagers { get; set; }
         public virtual DbSet<AssignedQaTask> AssignedQatasks { get; set; }
-        public virtual DbSet<Developer> Developers { get; set; }
+        public virtual DbSet<Developer> Developers => Set<Developer>();
         public virtual DbSet<Manager> Managers { get; set; }
         public virtual DbSet<QA> QA { get; set; }
         public virtual DbSet<Project> Projects { get; set; }
@@ -29,7 +29,7 @@ namespace MITT.EmployeeDb
         {
             if (optionsBuilder.IsConfigured) return;
 
-            optionsBuilder.UseSqlServer("Data Source =.; Initial Catalog = ManagementDb; Trusted_Connection = true;TrustServerCertificate=True;");
+            optionsBuilder.UseSqlServer("Data Source =.; Initial Catalog = ManagementDb; Trusted_Connection = true;TrustServerCertificate=True;", builder => builder.UseHierarchyId());
         }
 
         public async Task<string> GenerateSequence(ProjectType prefix = ProjectType.MB, bool withPrefix = true)
@@ -47,6 +47,10 @@ namespace MITT.EmployeeDb
             modelBuilder.Entity<Manager>().ToTable("Employees");
             modelBuilder.Entity<Developer>().ToTable("Employees");
             modelBuilder.Entity<QA>().ToTable("Employees");
+            
+            modelBuilder.Entity<Employee>()
+                .HasKey(x => x.Id);
+
             modelBuilder.Entity<Employee>()
                 .HasBaseType((Type)null)
                 .ToTable("Employees")
@@ -54,7 +58,6 @@ namespace MITT.EmployeeDb
                 .HasValue<Developer>(EmployeeType.Developer)
                 .HasValue<Manager>(EmployeeType.PM)
                 .HasValue<QA>(EmployeeType.QA);
-            
             modelBuilder.Entity<AssignedBeTask>()
                 .Property(x => x.BeReviews)
                 .HasConversion(m => JsonConvert.SerializeObject(m), vm => JsonConvert.DeserializeObject<List<BeReview>>(vm));

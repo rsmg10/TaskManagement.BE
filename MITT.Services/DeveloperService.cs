@@ -80,7 +80,10 @@ public class DeveloperService : ManagementService<Developer>, IDeveloperService
             var dev = await _managementDb.Developers.FirstOrDefaultAsync(x => x.Email == developerDto.Email, cancellationToken);
             if (dev is not null) return OperationResult.UnValid("this Email is already been taken");
 
-            var entity = Developer.Create(developerDto.FullName, developerDto.NickName, developerDto.Email, developerDto.Phone, developerDto.Pin, developerDto.Type);
+            var f = HierarchyId.Parse("/");
+            var fastring = f.ToString();
+            
+            var entity = Developer.Create(developerDto.FullName, fastring, developerDto.Email, developerDto.Phone, developerDto.Pin, developerDto.Type);
 
             await Add(entity, cancellationToken);
 

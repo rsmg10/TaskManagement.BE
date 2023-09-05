@@ -1,4 +1,7 @@
-﻿namespace MITT.EmployeeDb.Models
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
+
+namespace MITT.EmployeeDb.Models
 {
     public partial class Developer : Employee
     {
@@ -9,6 +12,7 @@
         }
         // public hierarchyid  Hierarchyid { get; set; }
         public DeveloperType DevType { get; set; }
+        
         public string Image { get; set; }
         public virtual ICollection<AssignedBeTask> AssignedBetasks { get; set; }
 
@@ -21,6 +25,7 @@
             Phone = phone,
             Pin = pin,
             DevType = developerType,
+            HierarchyId = HierarchyId.Parse("/") ,
             CreatedAt = DateTime.Now
         };
 
